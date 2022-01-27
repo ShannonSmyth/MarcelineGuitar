@@ -1,0 +1,202 @@
+/*Arduino speaker song tutorial
+* Original code created 26 Oct 2015
+* by Akshay James
+* Video at https://www.youtube.com/watch?v=LgtcUxe8fmA
+* 
+* Modified 25 Oct 2021
+* by Shannon Smyth
+* 
+* This code will play two different songs - "Everything Stays", and "I'm Just Your Problem" from the 
+* TV show Adventure Time. Songs are programmed to two push buttons and played out of an Arduino 
+* speaker connected to pin 9 and GND. Pushbuttons and additional song added by S. Smyth.
+*/
+
+#include"pitches.h"
+#define ES_PIN 8
+#define PROB_PIN 7
+
+// notes in the song 'Everything Stays"
+int ESmelody[] = {
+NOTE_B3, NOTE_D4, NOTE_G3, NOTE_D4,
+NOTE_B3, NOTE_G3,
+NOTE_B3, NOTE_D4, NOTE_E4, NOTE_G4,
+NOTE_B4, NOTE_A4,
+NOTE_A4, NOTE_G4, NOTE_A4, NOTE_B4,
+NOTE_A4, NOTE_G4, NOTE_E4, NOTE_E4, NOTE_D4,
+NOTE_B3, NOTE_D4, NOTE_A3,
+
+NOTE_B3, NOTE_D4, NOTE_B3, NOTE_D4,
+NOTE_B3, NOTE_G3,
+NOTE_B3, NOTE_D4, NOTE_E4, NOTE_G4,
+NOTE_B4, NOTE_A4, NOTE_G3,
+NOTE_A4, NOTE_G4, NOTE_A4, NOTE_B4,
+NOTE_A4, NOTE_G4, NOTE_E4, NOTE_D4,
+NOTE_B3, NOTE_B3, NOTE_D4, NOTE_A3,
+
+NOTE_B4, NOTE_A4, NOTE_G4, NOTE_A4,
+NOTE_B4, NOTE_A4, NOTE_G4, NOTE_G4, NOTE_E4,
+NOTE_G4, NOTE_A4, NOTE_G4, NOTE_FS4,
+NOTE_DS4, NOTE_A3, NOTE_A3, NOTE_A3, NOTE_G3,
+
+NOTE_B4, NOTE_A4, NOTE_G4, 
+NOTE_G4, NOTE_E4, 
+NOTE_AS4, NOTE_A4, NOTE_G4,
+NOTE_G4, NOTE_D4, 
+NOTE_B3, NOTE_D4, NOTE_E4, NOTE_A3, 
+NOTE_G3, NOTE_B3, NOTE_A3, 
+NOTE_G3, NOTE_G3,
+
+END,
+};
+
+// note durations: 8 = quarter note, 4 = 8th note, etc.
+int ESnoteDurations[] = {       //duration of the notes
+3,1,1,1,
+2,4,
+3,1,1,1,
+2,4,
+3,1,1,1,
+1,1,2,1,1,
+4,2,6,
+
+3,1,1,1,
+2,4,
+3,1,1,1,
+2,3,1,
+3,1,1,1,
+1,1,2,2,
+2,2,1,3,
+
+2,1,1,6,
+2,2,1,1,6,
+2,2,2,6,
+2,2,2,
+2,4,
+
+1,3,2,
+2,4,
+2,2,2,
+1,5,
+2,1,2,5,
+2,1,2,
+2,7,
+20,
+
+};
+
+int PROBmelody[] = {
+  NOTE_A4, NOTE_B4, NOTE_A4, NOTE_G4, 
+  NOTE_A4, NOTE_B4, NOTE_A4, NOTE_G4,
+  NOTE_A4, NOTE_B4,
+  NOTE_A4, NOTE_G5, NOTE_G5, NOTE_FS5,
+  NOTE_E5, NOTE_E5, NOTE_D5, NOTE_B4,
+
+  NOTE_A4, NOTE_B4, NOTE_A4, NOTE_G4, 
+  NOTE_A4, NOTE_B4, NOTE_A4, NOTE_G4,
+  NOTE_A4, NOTE_B4,
+  NOTE_G4, NOTE_G5, NOTE_G5, NOTE_FS5, NOTE_FS5,
+  NOTE_E5, NOTE_D5, NOTE_D5, NOTE_C5, NOTE_B4,
+
+  NOTE_D5, NOTE_B4, NOTE_B4, NOTE_B4, NOTE_B4, NOTE_E5,
+  NOTE_DS5, NOTE_B4, 
+  NOTE_G4, NOTE_A4, NOTE_G4, NOTE_A4, NOTE_G4, NOTE_G4,
+  NOTE_D5, NOTE_D5,
+
+  NOTE_B4, NOTE_A4, NOTE_B4, NOTE_G4,
+  NOTE_A4, NOTE_B4, NOTE_G4,
+  NOTE_A4, NOTE_B4, 
+  NOTE_G4, NOTE_G4, NOTE_G4,
+  NOTE_G5, NOTE_G5, NOTE_FS5, NOTE_FS5,
+  NOTE_E5, NOTE_E5, NOTE_D5, NOTE_D5,
+
+  NOTE_B4, NOTE_G5, NOTE_E5, NOTE_G5,
+  NOTE_FS5, NOTE_A4, NOTE_B4,
+  NOTE_FS5, NOTE_E5, NOTE_A4, NOTE_A4, NOTE_G4,
+
+  NOTE_FS5, NOTE_E5, NOTE_G5, NOTE_FS5, NOTE_E5, 
+  NOTE_A4, NOTE_A4, 
+  NOTE_FS5, NOTE_E5, NOTE_B4, NOTE_A4, NOTE_G4,
+
+  END,
+};
+
+
+int PROBnoteDurations[] = {
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 5,
+  1, 1.3, 1.3, 1.3, 1.3, 1.3, 1.3, 8,
+
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 5,
+  1, 2, 1, 1, 1, 1, 2, 2, 2, 5, 
+
+  1.5, 1.5, 1, 1.5, 1.5, 1, 
+  1, 3, 1, 1, 2,
+  1, 1, 3, 2, 7,
+
+  2, 1.3,1.3,1.3,1.3,1.3,1.3,
+  1.3,3.6,1,1,1,1,1,1,1,
+  1.3,1.3,1.3,4,
+
+  4,2,2,2,4,1,5,
+  2,2,2,4,6,
+
+  2,2,2,1,3,1,5,
+  2,2,2,4,4,
+  20,
+  
+};
+
+int ESspeed=270;  //higher value, slower notes
+int PROBspeed=270;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(ES_PIN, INPUT_PULLUP);
+  pinMode(PROB_PIN, INPUT_PULLUP);
+}
+
+void loop() {
+  byte ESState = digitalRead(ES_PIN);
+  byte PROBState = digitalRead(PROB_PIN);
+  
+  if (ESState == LOW) {
+      PlayES();
+  }
+
+  else if (PROBState == LOW) {
+    PlayPROB();
+  }
+  else{
+      Serial.println("Button is not pressed");
+  }
+  delay(100);
+}
+
+void PlayES(){
+ Serial.println("Playing EVERYTHING STAYS");
+  delay(500);
+  for (int thisNote = 0; ESmelody[thisNote]!=-1; thisNote++) {
+    int noteDuration = ESspeed*ESnoteDurations[thisNote];
+    tone(9, ESmelody[thisNote],noteDuration*.95);
+    Serial.println(ESmelody[thisNote]);
+
+    delay(noteDuration);
+
+    noTone(9);
+}
+  return;
+}
+
+void PlayPROB(){
+ Serial.println("Playing I'M JUST YOUR PROBLEM");
+  delay(500);
+  for (int thisNote = 0; PROBmelody[thisNote]!=-1; thisNote++) {
+    int noteDuration = PROBspeed*PROBnoteDurations[thisNote];
+    tone(9, PROBmelody[thisNote],noteDuration*.95);
+   Serial.println(PROBmelody[thisNote]);
+
+    delay(noteDuration);
+
+    noTone(9);
+}
+  return;
+}
